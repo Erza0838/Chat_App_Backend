@@ -1,0 +1,382 @@
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/Chat_App_Server/Chat_Database.ts b/Chat_App_Server/Chat_Database.ts[m
+[1mindex dcbe982..74eaea2 100644[m
+[1m--- a/Chat_App_Server/Chat_Database.ts[m
+[1m+++ b/Chat_App_Server/Chat_Database.ts[m
+[36m@@ -1,5 +1,3 @@[m
+[31m-// import mysql from "mysql2"[m
+[31m-// import dbConfig from "./Config/db.config"[m
+ import { PrismaClient } from "@prisma/client"[m
+ import { Logger } from "./Logging"[m
+ [m
+[36m@@ -44,4 +42,6 @@[m [mprismaClient.$on("info", (error) =>[m
+ prismaClient.$on("query", (error) => [m
+ {[m
+     Logger.info(error)[m
+[31m-})[m
+\ No newline at end of file[m
+[32m+[m[32m})[m
+[32m+[m
+[32m+[m[32mprismaClient.$connect()[m
+\ No newline at end of file[m
+[1mdiff --git a/Chat_App_Server/Chat_Server.ts b/Chat_App_Server/Chat_Server.ts[m
+[1mindex c8660f0..1a583b9 100644[m
+[1m--- a/Chat_App_Server/Chat_Server.ts[m
+[1m+++ b/Chat_App_Server/Chat_Server.ts[m
+[36m@@ -1,9 +1,6 @@[m
+[31m-import express, { Request, Response, Express } from "express"[m
+[31m-import path from "path"[m
+[32m+[m[32mimport express, { Request, Response, Express, request, response } from "express"[m
+ import bodyParser from "body-parser"[m
+[31m-import { PrismaClient } from "@prisma/client"[m
+[31m-import { Connection } from "mysql2/typings/mysql/lib/Connection"[m
+[31m-import { OkPacketParams } from "mysql2"[m
+[32m+[m[32mimport cors from "cors"[m
+ import helmet from "helmet"[m
+ [m
+ const app:Express = express()[m
+[36m@@ -12,18 +9,22 @@[m [mconst PORT = 3000[m
+ // Import model[m
+ import { CreateNewAccountRequest } from "./Model/UserModel"[m
+ import { UserValidationReference } from "./Validation/RegisterLoginValidation"[m
+[32m+[m[32mimport { UserHasLogin } from "./Model/IUserHasLogin"[m
+ [m
+ // Import router[m
+ import RegisterRouter from "./Router/UserRoutes"[m
+[32m+[m[32mimport { FrontendApiUrl } from "./Router/ApiEndpoint"[m
+ [m
+ // Gunakan router untuk membuat jalur URL[m
+ app.use( "/api/User/Register", RegisterRouter)[m
+ [m
+[31m-app.use(bodyParser.json())[m
+[31m-app.use(bodyParser.urlencoded({ extended: true }))[m
+[31m-app.use(helmet)[m
+[32m+[m[32mapp.use(express.json())[m
+[32m+[m[32mapp.use(express.urlencoded({ extended: true }))[m
+[32m+[m[32mapp.use(helmet())[m
+[32m+[m[32mapp.use(cors())[m
+[32m+[m
+[32m+[m[32m// Konfigurasi CORS[m
+ [m
+[31m-// app.use()[m
+ [m
+ function ConnectionPort(): void[m
+ {[m
+[36m@@ -41,18 +42,6 @@[m [mfunction ConnectionPort(): void[m
+ }[m
+ ConnectionPort()[m
+ [m
+[31m-function DisplayLoginForm(): void[m
+[31m-{   [m
+[31m-    app.use(express.static(path.join(__dirname, "../public")))[m
+[31m-    app.set("views", path.join(__dirname, "../Views"))[m
+[31m-    app.set("view engine", "ejs")[m
+[31m-    app.get("/Login", (request: Request, response: Response) => [m
+[31m-    {[m
+[31m-        response.render("UserLoginForm")[m
+[31m-    })[m
+[31m-}[m
+[31m-DisplayLoginForm()[m
+[31m-[m
+ function ShowLoginInformation(): void[m
+ {   [m
+     app.post("/LoginPage", (request: Request, response: Response) => [m
+[36m@@ -67,15 +56,53 @@[m [mfunction ShowLoginInformation(): void[m
+ }[m
+ [m
+ // Function untuk memasukkan data data user membuat akun baru[m
+[31m-function NewRegisterUser(): void[m
+[32m+[m[32m// function NewRegisterUser(): void[m
+[32m+[m[32m// {[m
+[32m+[m[32m//     app.post("/api/User/Register", (request: Request<{},{},CreateNewAccountRequest,UserHasLogin>, response: Response) =>[m[41m [m
+[32m+[m[32m//     {[m[41m   [m
+[32m+[m[32m//         if(request.query.LoginAfterCreate == true)[m
+[32m+[m[32m//         {[m
+[32m+[m[32m//             return response.status(201).send({[m[41m   [m
+[32m+[m[32m//                 Email: request.body.CreateEmail,[m
+[32m+[m[32m//                 Username: request.body.CreateUserName,[m[41m [m
+[32m+[m[32m//                 Genders: request.body.InsertGenders[m
+[32m+[m[32m//             })[m
+[32m+[m[32m//         }[m
+[32m+[m[32m//     })[m[41m  [m
+[32m+[m[32m// }[m
+[32m+[m[32m// NewRegisterUser()[m
+[32m+[m
+[32m+[m[32mconst FrontendApiUrlReference: FrontendApiUrl =[m
+[32m+[m[32m{[m
+[32m+[m[32m    RegisterUrl: "http://localhost:5173/LoginUser/RegisterUser/"[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mconst data: CreateNewAccountRequest =[m
+ {[m
+[31m-    app.post("/api/User/Register", (request: Request, response: Response) => [m
+[32m+[m[32m    InsertGenders: "Laki laki",[m
+[32m+[m[32m    CreateEmail: "RanggaYuma@gmail.com",[m
+[32m+[m[32m    CreatePassword: "oreoreore",[m
+[32m+[m[32m    CreateUserName: "Rangga"[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// Function untuk memasukkan data data user membuat akun baru[m
+[32m+[m[32masync function NewRegisterUser(ApiUrl: string, data: string): Promise<Response>[m[41m [m
+[32m+[m[32m{[m
+[32m+[m[32m    app.post("/api/User/Register", async (request: Request, response: Response) =>[m[41m [m
+     {   [m
+[31m-        let UserRegisterInformation : { UserEmail: string, UserPassword: string } = [m
+[32m+[m[32m        const responseData = await fetch(ApiUrl,{[m
+[32m+[m[32m            method : "POST",[m
+[32m+[m[32m            headers : {[m
+[32m+[m[32m                "Content-Type": "application/json"[m
+[32m+[m[32m            },[m
+[32m+[m[32m            body : JSON.stringify(data)[m
+[32m+[m[32m        })[m[41m [m
+[32m+[m[32m        if(!responseData.ok)[m
+         {[m
+[31m-            UserEmail: request.body.LoginEmail,[m
+[31m-            UserPassword: request.body.LoginPassword[m
+[32m+[m[32m            throw new Error(`Eror : ${response.status}`)[m[41m            [m
+         }[m
+[31m-    })  [m
+[32m+[m[32m    })[m
+[32m+[m[32m    return response.json()[m
+ }[m
+[31m-NewRegisterUser()[m
+\ No newline at end of file[m
+[32m+[m
+[32m+[m[32m// NewRegisterUser(FrontendApiUrlReference.RegisterUrl, data.InsertGenders,data.CreateEmail, data.CreatePassword,data.CreateUserName)[m
+\ No newline at end of file[m
+[1mdiff --git a/Chat_App_Server/Cors_Config.ts b/Chat_App_Server/Cors_Config.ts[m
+[1mindex e69de29..624ad6c 100644[m
+[1m--- a/Chat_App_Server/Cors_Config.ts[m
+[1m+++ b/Chat_App_Server/Cors_Config.ts[m
+[36m@@ -0,0 +1,24 @@[m
+[32m+[m[32mimport express, { Request, Response, Express, request } from "express"[m
+[32m+[m[32m// import { Router } from "express"[m
+[32m+[m[32mimport * as cors from "cors"[m
+[32m+[m
+[32m+[m[32mvar router = express.Router()[m
+[32m+[m
+[32m+[m[32mconst options: cors.CorsOptions =[m[41m [m
+[32m+[m[32m{[m
+[32m+[m[32m    allowedHeaders:[m[41m [m
+[32m+[m[32m    [[m
+[32m+[m[32m        "origin",[m
+[32m+[m[32m        "X-Requested-With",[m
+[32m+[m[32m        "Accept",[m
+[32m+[m[32m        "X-Access-Token"[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    credentials: true,[m
+[32m+[m[32m    methods: "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE",[m
+[32m+[m[32m    origin: "http://localhost:3000/api/User/Register",[m
+[32m+[m[32m    preflightContinue: false[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// router.use(cors(options))[m
+[32m+[m
+[32m+[m[32m// export default router.options("*", cors(options))[m
+\ No newline at end of file[m
+[1mdiff --git a/Chat_App_Server/Model/UserModel.ts b/Chat_App_Server/Model/UserModel.ts[m
+[1mindex b0dde50..0c0e9e0 100644[m
+[1m--- a/Chat_App_Server/Model/UserModel.ts[m
+[1m+++ b/Chat_App_Server/Model/UserModel.ts[m
+[36m@@ -4,10 +4,9 @@[m [mexport type UserResponse = {[m
+     CreateToken?: String    [m
+ }[m
+ [m
+[31m-export type CreateNewAccountRequest = {[m
+[32m+[m[32mexport interface CreateNewAccountRequest {[m
+     InsertGenders: String,[m
+     CreateEmail: String,[m
+     CreatePassword: String[m
+     CreateUserName: String[m
+[31m-    // UserName: String[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/Chat_App_Server/Router/ApiEndpoint.ts b/Chat_App_Server/Router/ApiEndpoint.ts[m
+[1mindex e69de29..e86430a 100644[m
+[1m--- a/Chat_App_Server/Router/ApiEndpoint.ts[m
+[1m+++ b/Chat_App_Server/Router/ApiEndpoint.ts[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mexport interface FrontendApiUrl[m
+[32m+[m[32m{[m
+[32m+[m[32m    readonly RegisterUrl: string,[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/package-lock.json b/package-lock.json[m
+[1mindex edf6879..804f0cc 100644[m
+[1m--- a/package-lock.json[m
+[1m+++ b/package-lock.json[m
+[36m@@ -15,7 +15,6 @@[m
+         "body-parser": "^1.20.2",[m
+         "cors": "^2.8.5",[m
+         "dotenv": "^16.4.5",[m
+[31m-        "ejs": "^3.1.10",[m
+         "express": "^4.19.2",[m
+         "helmet": "^7.1.0",[m
+         "mysql2": "^3.9.7",[m
+[36m@@ -28,6 +27,7 @@[m
+         "@babel/preset-typescript": "^7.24.1",[m
+         "@jest/globals": "^29.7.0",[m
+         "@types/bcrypt": "^5.0.2",[m
+[32m+[m[32m        "@types/cors": "^2.8.17",[m
+         "@types/express": "^4.17.21",[m
+         "@types/jest": "^29.5.12",[m
+         "@types/supertest": "^6.0.2",[m
+[36m@@ -36,23 +36,10 @@[m
+         "nodemon": "^3.1.0",[m
+         "prisma": "^5.14.0",[m
+         "supertest": "^7.0.0",[m
+[31m-        "tailwindcss": "^3.4.3",[m
+         "ts-node": "^10.9.2",[m
+         "typescript": "^5.4.5"[m
+       }[m
+     },[m
+[31m-    "node_modules/@alloc/quick-lru": {[m
+[31m-      "version": "5.2.0",[m
+[31m-      "resolved": "https://registry.npmjs.org/@alloc/quick-lru/-/quick-lru-5.2.0.tgz",[m
+[31m-      "integrity": "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==",[m
+[31m-      "dev": true,[m
+[31m-      "engines": {[m
+[31m-        "node": ">=10"[m
+[31m-      },[m
+[31m-      "funding": {[m
+[31m-        "url": "https://github.com/sponsors/sindresorhus"[m
+[31m-      }[m
+[31m-    },[m
+     "node_modules/@ampproject/remapping": {[m
+       "version": "2.3.0",[m
+       "resolved": "https://registry.npmjs.org/@ampproject/remapping/-/remapping-2.3.0.tgz",[m
+[36m@@ -2045,23 +2032,6 @@[m
+         "kuler": "^2.0.0"[m
+       }[m
+     },[m
+[31m-    "node_modules/@isaacs/cliui": {[m
+[31m-      "version": "8.0.2",[m
+[31m-      "resolved": "https://registry.npmjs.org/@isaacs/cliui/-/cliui-8.0.2.tgz",[m
+[31m-      "integrity": "sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==",[m
+[31m-      "dev": true,[m
+[31m-      "dependencies": {[m
+[31m-        "string-width": "^5.1.2",[m
+[31m-        "string-width-cjs": "npm:string-width@^4.2.0",[m
+[31m-        "strip-ansi": "^7.0.1",[m
+[31m-        "strip-ansi-cjs": "npm:strip-ansi@^6.0.1",[m
+[31m-        "wrap-ansi": "^8.1.0",[m
+[31m-        "wrap-ansi-cjs": "npm:wrap-ansi@^7.0.0"[m
+[31m-      },[m
+[31m-      "engines": {[m
+[31m-        "node": ">=12"[m
+[31m-      }[m
+[31m-    },[m
+     "node_modules/@istanbuljs/load-nyc-config": {[m
+       "version": "1.1.0",[m
+       "resolved": "https://registry.npmjs.org/@istanbuljs/load-nyc-config/-/load-nyc-config-1.1.0.tgz",[m
+[36m@@ -2315,51 +2285,6 @@[m
+         "node": ">=6"[m
+       }[m
+     },[m
+[31m-    "node_modules/@nodelib/fs.scandir": {[m
+[31m-      "version": "2.1.5",[m
+[31m-      "resolved": "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz",[m
+[31m-      "integrity": "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==",[m
+[31m-      "dev": true,[m
+[31m-      "dependencies": {[m
+[31m-        "@nodelib/fs.stat": "2.0.5",[m
+[31m-        "run-parallel": "^1.1.9"[m
+[31m-      },[m
+[31m-      "engines": {[m
+[31m-        "node": ">= 8"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/@nodelib/fs.stat": {[m
+[31m-      "version": "2.0.5",[m
+[31m-      "resolved": "https://registry.npmjs.org/@nodelib/fs.stat/-/fs.stat-2.0.5.tgz",[m
+[31m-      "integrity": "sha512-RkhPPp2zrqDAQA/2jNhnztcPAlv64XdhIp7a7454A5ovI7Bukxgt7MX7udwAu3zg1DcpPU0rz3VV1SeaqvY4+A==",[m
+[31m-      "dev": true,[m
+[31m-      "engines": {[m
+[31m-        "node": ">= 8"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/@nodelib/fs.walk": {[m
+[31m-      "version": "1.2.8",[m
+[31m-      "resolved": "https://registry.npmjs.org/@nodelib/fs.walk/-/fs.walk-1.2.8.tgz",[m
+[31m-      "integrity": "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==",[m
+[31m-      "dev": true,[m
+[31m-      "dependencies": {[m
+[31m-        "@nodelib/fs.scandir": "2.1.5",[m
+[31m-        "fastq": "^1.6.0"[m
+[31m-      },[m
+[31m-      "engines": {[m
+[31m-        "node": ">= 8"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/@pkgjs/parseargs": {[m
+[31m-      "version": "0.11.0",[m
+[31m-      "resolved": "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz",[m
+[31m-      "integrity": "sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==",[m
+[31m-      "dev": true,[m
+[31m-      "optional": true,[m
+[31m-      "engines": {[m
+[31m-        "node": ">=14"[m
+[31m-      }[m
+[31m-    },[m
+     "node_modules/@prisma/client": {[m
+       "version": "5.14.0",[m
+       "resolved": "https://registry.npmjs.org/@prisma/client/-/client-5.14.0.tgz",[m
+[36m@@ -2545,6 +2470,15 @@[m
+       "integrity": "sha512-he+DHOWReW0nghN24E1WUqM0efK4kI9oTqDm6XmK8ZPe2djZ90BSNdGnIyCLzCPw7/pogPlGbzI2wHGGmi4O/Q==",[m
+       "dev": true[m
+     },[m
+[32m+[m[32m    "node_modules/@types/cors": {[m
+[32m+[m[32m      "version": "2.8.17",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/@types/cors/-/cors-2.8.17.tgz",[m
+[32m+[m[32m      "integrity": "sha512-8CGDvrBj1zgo2qE+oS3pOCyYNqCPryMWY2bGfwA0dcfopWGgxs+78df0Rs3rc9THP4JkOhLsAa+15VdpAqkcUA==",[m
+[32m+[m[32m      "dev": true,[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@types/node": "*"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "node_modules/@types/express": {[m
+       "version": "4.17.21",[m
+       "resolved": "https://registry.npmjs.org/@types/express/-/express-4.17.21.tgz",[m
+[36m@@ -2802,36 +2736,6 @@[m
+       "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.2.tgz",[m
+       "integrity": "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="[m
+     },[m
+[31m-    "node_modules/ansi-regex": {[m
+[31m-      "version": "6.0.1",[m
+[31m-      "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-6.0.1.tgz",[m
+[31m-      "integrity": "sha512-n5M855fKb2SsfMIiFFoVrABHJC8QtHwVx+mHWP3QcEqBHYienj5dHSgjbxtC0WEZXYt4wcD6zrQElDPhFuZgfA==",[m
+[31m-      "dev": true,[m
+[31m-      "engines": {[m
+[31m-        "node": ">=12"[m
+[31m-      },[m
+[31m-      "funding": {[m
+[31m-        "url": "https://github.com/chalk/ansi-regex?sponsor=1"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/ansi-styles": {[m
+[31m-      "version": "6.2.1",[m
+[31m-      "resolved": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-6.2.1.tgz",[m
+[31m-      "integrity": "sha512-bN798gFfQX+viw3R7yrGWRqnrN2oRkEkUjjl4JNn4E8GxxbjtG3FbrEIIY3l8/hrwUwIeCZvi4QuOTP4MErVug==",[m
+[31m-      "dev": true,[m
+[31m-      "engines": {[m
+[31m-        "node": ">=12"[m
+[31m-      },[m
+[31m-      "funding": {[m
+[31m-        "url": "https://github.com/chalk/ansi-styles?sponsor=1"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/any-promise": {[m
+[31m-      "version": "1.3.0",[m
+[31m-      "resolved": "https://registry.npmjs.org/any-promise/-/any-promise-1.3.0.tgz",[m
+[31m-      "integrity": "sha512-7UvmKalWRt1wgjL1RrGxoSJW/0QZFIegpeGvZG9kjp8vrRu55XTHbwnqq2GpXm9uLbcuhxm3IqX9OB4MZR1b2A==",[m
+[31m-      "dev": true[m
+[31m-    },[m
+     "node_modules/anymatch": {[m
+       "version": "3.1.3",[m
+       "resolved": "https://registry.npmjs.org/anymatch/-/anymatch-3.1.3.tgz",[m
+[36m@@ -3188,15 +3092,6 @@[m
+         "node": ">=6"[m
+       }[m
+     },[m
+[31m-    "node_module

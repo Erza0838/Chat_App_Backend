@@ -4,10 +4,9 @@ export type UserResponse = {
     CreateToken?: String    
 }
 
-export type CreateNewAccountRequest = {
+export interface CreateNewAccountRequest {
     InsertGenders: String,
     CreateEmail: String,
     CreatePassword: String
     CreateUserName: String
-    // UserName: String
 }

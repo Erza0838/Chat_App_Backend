@@ -1,9 +1,6 @@
-import express, { Request, Response, Express } from "express"
-import path from "path"
+import express, { Request, Response, Express, request, response } from "express"
 import bodyParser from "body-parser"
-import { PrismaClient } from "@prisma/client"
-import { Connection } from "mysql2/typings/mysql/lib/Connection"
-import { OkPacketParams } from "mysql2"
+import cors from "cors"
 import helmet from "helmet"
 
 const app:Express = express()
@@ -12,18 +9,22 @@ const PORT = 3000
 // Import model
 import { CreateNewAccountRequest } from "./Model/UserModel"
 import { UserValidationReference } from "./Validation/RegisterLoginValidation"
+import { UserHasLogin } from "./Model/IUserHasLogin"
 
 // Import router
 import RegisterRouter from "./Router/UserRoutes"
+import { FrontendApiUrl } from "./Router/ApiEndpoint"
 
 // Gunakan router untuk membuat jalur URL
 app.use( "/api/User/Register", RegisterRouter)
 
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(helmet)
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(helmet())
+app.use(cors())
 
-// app.use()
+// Konfigurasi CORS
+
 
 function ConnectionPort(): void
 {
@@ -41,18 +42,6 @@ function ConnectionPort(): void
 }
 ConnectionPort()
 
-function DisplayLoginForm(): void
-{   
-    app.use(express.static(path.join(__dirname, "../public")))
-    app.set("views", path.join(__dirname, "../Views"))
-    app.set("view engine", "ejs")
-    app.get("/Login", (request: Request, response: Response) => 
-    {
-        response.render("UserLoginForm")
-    })
-}
-DisplayLoginForm()
-
 function ShowLoginInformation(): void
 {   
     app.post("/LoginPage", (request: Request, response: Response) => 
@@ -67,15 +56,53 @@ function ShowLoginInformation(): void
 }
 
 // Function untuk memasukkan data data user membuat akun baru
-function NewRegisterUser(): void
+// function NewRegisterUser(): void
+// {
+//     app.post("/api/User/Register", (request: Request<{},{},CreateNewAccountRequest,UserHasLogin>, response: Response) => 
+//     {   
+//         if(request.query.LoginAfterCreate == true)
+//         {
+//             return response.status(201).send({   
+//                 Email: request.body.CreateEmail,
+//                 Username: request.body.CreateUserName, 
+//                 Genders: request.body.InsertGenders
+//             })
+//         }
+//     })  
+// }
+// NewRegisterUser()
+
+const FrontendApiUrlReference: FrontendApiUrl =
 {
-    app.post("/api/User/Register", (request: Request, response: Response) => 
-    {   
-        let UserRegisterInformation : { UserEmail: string, UserPassword: string } = 
-        {
-            UserEmail: request.body.LoginEmail,
-            UserPassword: request.body.LoginPassword
-        }
-    })  
+    RegisterUrl: "http://localhost:5173/LoginUser/RegisterUser/"
 }
-NewRegisterUser()
+
+const data: CreateNewAccountRequest =
+{
+    InsertGenders: "Laki laki",
+    CreateEmail: "RanggaYuma@gmail.com",
+    CreatePassword: "oreoreore",
+    CreateUserName: "Rangga"
+}
+
+// Function untuk memasukkan data data user membuat akun baru
+async function NewRegisterUser(ApiUrl: string, data: string): Promise<Response> 
+{
+    app.post("/api/User/Register", async (request: Request, response: Response) => 
+    {   
+        const responseData = await fetch(ApiUrl,{
+            method : "POST",
+            headers : {
+                "Content-Type": "application/json"
+            },
+            body : JSON.stringify(data)
+        }) 
+        if(!responseData.ok)
+        {
+            throw new Error(`Eror : ${response.status}`)            
+        }
+    })
+    return response.json()
+}
+
+// NewRegisterUser(FrontendApiUrlReference.RegisterUrl, data.InsertGenders,data.CreateEmail, data.CreatePassword,data.CreateUserName)

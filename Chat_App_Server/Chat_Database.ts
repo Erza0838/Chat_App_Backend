@@ -1,5 +1,3 @@
-// import mysql from "mysql2"
-// import dbConfig from "./Config/db.config"
 import { PrismaClient } from "@prisma/client"
 import { Logger } from "./Logging"
 
@@ -45,3 +43,5 @@ prismaClient.$on("query", (error) =>
 {
     Logger.info(error)
 })
+
+prismaClient.$connect()
