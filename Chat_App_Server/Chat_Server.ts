@@ -1,9 +1,11 @@
-import express, { Request, Response, Express, request, response } from "express"
+import express, { Application,Request, Response, Express, response} from "express"
 import bodyParser from "body-parser"
 import cors from "cors"
 import helmet from "helmet"
+import axios from "axios"
+// import domparser from "domparser"
 
-const app:Express = express()
+const app:Application = express()
 const PORT = 3000
 
 // Import model
@@ -12,19 +14,21 @@ import { UserValidationReference } from "./Validation/RegisterLoginValidation"
 import { UserHasLogin } from "./Model/IUserHasLogin"
 
 // Import router
-import RegisterRouter from "./Router/UserRoutes"
+import RegisterRouter from "./Router/NewUserRoutes"
 import { FrontendApiUrl } from "./Router/ApiEndpoint"
+import { compareSync } from "bcrypt"
+import { error } from "winston"
+import { any } from "zod"
 
-// Gunakan router untuk membuat jalur URL
-app.use( "/api/User/Register", RegisterRouter)
 
 app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(helmet())
+app.use(express.urlencoded({ extended: false }))
 app.use(cors())
 
-// Konfigurasi CORS
-
+const FrontendApiUrlReference: FrontendApiUrl =
+{
+    RegisterUrl: "http://localhost:5173/LoginUser/RegisterUser/"
+}
 
 function ConnectionPort(): void
 {
@@ -37,7 +41,7 @@ function ConnectionPort(): void
     } 
     catch (error) 
     {
-        console.log(error)
+        console.log(error)  
     }
 }
 ConnectionPort()
@@ -55,54 +59,57 @@ function ShowLoginInformation(): void
     })  
 }
 
+// Perbaikan register api
+app.post("/api/User/Register", async (request: Request, response: Response) => 
+{   
+    // const ResponseData = await axios.post<CreateNewAccountRequest[]>(FrontendApiUrlReference.RegisterUrl)
+    // const result = ResponseData.data
+    // response.json(result.map((InterfaceProperty) => 
+    // ({
+    //     InsertGender: InterfaceProperty.InsertGenders,
+    //     CreateEmail: InterfaceProperty.CreateEmail,
+    //     CreatePassword: InterfaceProperty.CreatePassword,  
+    //     CreateUserName: InterfaceProperty.CreateUserName
+    // })))
+    const ResponseData = await fetch(FrontendApiUrlReference.RegisterUrl)
+    const data = await ResponseData.json() 
+    console.log(data)
+    return data
+})
+
 // Function untuk memasukkan data data user membuat akun baru
-// function NewRegisterUser(): void
-// {
-//     app.post("/api/User/Register", (request: Request<{},{},CreateNewAccountRequest,UserHasLogin>, response: Response) => 
-//     {   
-//         if(request.query.LoginAfterCreate == true)
-//         {
-//             return response.status(201).send({   
-//                 Email: request.body.CreateEmail,
-//                 Username: request.body.CreateUserName, 
-//                 Genders: request.body.InsertGenders
-//             })
-//         }
-//     })  
-// }
+function NewRegisterUser(): void
+{           
+    app.post("/api/User/Register", async (request: Request, response: Response) => 
+    {       
+        // FetchData()
+        // const RegiserData : CreateNewAccountRequest = request.body as CreateNewAccountRequest
+        // try 
+        // {
+        //     const responseData = await fetch(FrontendApiUrlReference.RegisterUrl, 
+        //     {
+        //         method: "POST",
+        //         headers: 
+        //         {
+        //         "Content-Type":"application/json"
+        //         },
+        //         body: JSON.stringify({
+        //         Gender: RegiserData.InsertGenders,
+        //         Email: RegiserData.CreateEmail,
+        //         Username: RegiserData.CreateUserName,
+        //         Password: RegiserData.CreatePassword        
+        //         })
+        //     })
+        //       .then(response => console.log(response))
+        //       .then(data => console.log(data))
+        //       .catch(error => console.log(error))
+        // } 
+        // catch (error) 
+        // {
+        //     console.log(error)
+        // }
+    })
+}
 // NewRegisterUser()
 
-const FrontendApiUrlReference: FrontendApiUrl =
-{
-    RegisterUrl: "http://localhost:5173/LoginUser/RegisterUser/"
-}
-
-const data: CreateNewAccountRequest =
-{
-    InsertGenders: "Laki laki",
-    CreateEmail: "RanggaYuma@gmail.com",
-    CreatePassword: "oreoreore",
-    CreateUserName: "Rangga"
-}
-
-// Function untuk memasukkan data data user membuat akun baru
-async function NewRegisterUser(ApiUrl: string, data: string): Promise<Response> 
-{
-    app.post("/api/User/Register", async (request: Request, response: Response) => 
-    {   
-        const responseData = await fetch(ApiUrl,{
-            method : "POST",
-            headers : {
-                "Content-Type": "application/json"
-            },
-            body : JSON.stringify(data)
-        }) 
-        if(!responseData.ok)
-        {
-            throw new Error(`Eror : ${response.status}`)            
-        }
-    })
-    return response.json()
-}
-
-// NewRegisterUser(FrontendApiUrlReference.RegisterUrl, data.InsertGenders,data.CreateEmail, data.CreatePassword,data.CreateUserName)
+export default app
